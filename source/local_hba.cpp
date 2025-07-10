@@ -24,6 +24,7 @@
 #include "hba.hpp"
 #include "tools.hpp"
 #include "mypcl.hpp"
+#include "pgo.hpp"
 
 using namespace std;
 using namespace Eigen;
@@ -514,5 +515,6 @@ int main(int argc, char** argv)
   }
   global_ba(hba.layers[total_layer_num-1]);
   hba.pose_graph_optimization();
+  hba.save_map();
   printf("iteration complete\n");
 }

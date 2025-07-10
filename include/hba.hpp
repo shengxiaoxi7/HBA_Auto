@@ -141,7 +141,7 @@ public:
       layers[i].thread_num = thread_num;
     }
     layers[0].data_path = data_path;
-    layers[0].pose_vec = mypcl::read_pose(data_path + "pose_optimized.json");
+    layers[0].pose_vec = mypcl::read_pose(data_path + "pose.json");
     layers[0].init_parameter();
     layers[0].init_storage(total_layer_num);
 
@@ -263,6 +263,25 @@ public:
     mypcl::write_pose(init_pose, data_path);
     printf("pgo complete\n");
   }
+
+  void save_map()
+  {
+    std::vector<mypcl::pose> pose_vec;
+    std::vector<boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>>> pcds;
+    pose_vec = layers[total_layer_num-1].pose_vec;
+    pcds.resize(pose_vec.size());
+    for(size_t i = 0; i < pose_vec.size(); i++){
+      pcds[i] = layers[total_layer_num-1].pcds[i];
+    }
+    if(pose_vec.empty() || pcds.empty())
+    {
+      printf("No poses or point clouds to save.\n");
+      return;
+    }
+
+    mypcl::write_global_map_from_pose(pose_vec, data_path, pcds);
+  }
+
 };
 
 #endif

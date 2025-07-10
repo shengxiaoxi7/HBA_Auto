@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED QUIET)
+find_package(Ceres REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
@@ -34,6 +35,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${GTSAM_INCLUDE_DIR}
+  ${CERES_INCLUDE_DIRS}
 )
 
 catkin_package(
@@ -51,3 +53,9 @@ target_link_libraries(visualize_map ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 add_executable(calculate_MME source/calculate_MME.cpp)
 target_link_libraries(calculate_MME ${catkin_LIBRARIES} ${PCL_LIBRARIES} gtsam)
+
+add_executable(local_hba source/local_hba.cpp)
+target_link_libraries(local_hba ${catkin_LIBRARIES} ${PCL_LIBRARIES} gtsam)
+
+add_executable(test_pgo test/test_pgo.cpp)
+target_link_libraries(test_pgo ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${CERES_LIBRARIES} gtsam)

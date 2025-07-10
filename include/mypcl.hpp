@@ -7,8 +7,12 @@
 #include <string>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/common/transforms.h>
+#include <pcl/filters/voxel_grid.h>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
+
+#include "tools.hpp"
 
 typedef std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d> > vector_vec3d;
 typedef std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond> > vector_quad;
@@ -140,11 +144,11 @@ namespace mypcl
   void write_pose(std::vector<pose>& pose_vec, std::string path)
   {
     std::ofstream file;
-    file.open(path + "pose_optimized.json", std::ofstream::trunc);
+    file.open(path + "pose.json", std::ofstream::trunc);
     file.close();
     Eigen::Quaterniond q0(pose_vec[0].q.w(), pose_vec[0].q.x(), pose_vec[0].q.y(), pose_vec[0].q.z());
     Eigen::Vector3d t0(pose_vec[0].t(0), pose_vec[0].t(1), pose_vec[0].t(2));
-    file.open(path + "pose_optimized.json", std::ofstream::app);
+    file.open(path + "pose.json", std::ofstream::app);
 
     for(size_t i = 0; i < pose_vec.size(); i++)
     {
@@ -167,11 +171,31 @@ namespace mypcl
   {
       pcl::PointCloud<PointType>::Ptr global_map(new pcl::PointCloud<PointType>());
 
+      for (size_t i = 0; i < pose_vec.size(); ++i)
+      {
+          Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
 
-      pcl::io::savePCDFileASCII(path + "global_map.pcd", *global_map);
-      std::cout << "Global map saved to " << path + "global_map.pcd" << std::endl;
+          transform.block<3, 3>(0, 0) = pose_vec[i].q.toRotationMatrix().cast<float>();  // 旋转部分
+          transform.block<3, 1>(0, 3) = pose_vec[i].t.cast<float>();  // 平移部分
+
+          pcl::PointCloud<PointType>::Ptr cloud = pcds[i];
+
+          pcl::PointCloud<PointType>::Ptr transformed_cloud(new pcl::PointCloud<PointType>());
+          pcl::transformPointCloud(*cloud, *transformed_cloud, transform);
+
+          *global_map += *transformed_cloud;
+      }
+
+      if (global_map->points.empty())
+      {
+          std::cerr << "No points in the global map. Please check the input point clouds." << std::endl;
+          return;
+      }
+      downsample_voxel(*global_map, 0.1);
+
+      pcl::io::savePCDFileASCII(path + "final_map.pcd", *global_map);
+      std::cout << "Global map saved to " << path + "final_map.pcd" << std::endl;
   }
-    
 
   void writeEVOPose(std::vector<double>& lidar_times, std::vector<pose>& pose_vec, std::string path)
   {
