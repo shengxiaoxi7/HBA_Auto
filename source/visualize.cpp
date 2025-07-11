@@ -57,9 +57,9 @@ int main(int argc, char** argv)
   vector<mypcl::pose> pose_vec;
 
   if (optimized_num == 0){
-    pose_vec = mypcl::read_pose(file_path + "pose.json");
+    pose_vec = mypcl::read_pose(file_path + "pose_original.json");
   } else {
-    pose_vec = mypcl::read_pose(file_path + "pose_optimized.json");
+    pose_vec = mypcl::read_pose(file_path + "pose.json");
   }
   
   size_t pose_size = pose_vec.size();

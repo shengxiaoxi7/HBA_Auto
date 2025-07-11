@@ -19,6 +19,7 @@
 #include "mypcl.hpp"
 #include "tools.hpp"
 #include "ba.hpp"
+#include "pgo.hpp"
 
 class LAYER
 {
@@ -142,6 +143,7 @@ public:
     }
     layers[0].data_path = data_path;
     layers[0].pose_vec = mypcl::read_pose(data_path + "pose.json");
+    // PGO 优化部分，用kf.q和kf.t来初始化pose_vec
     layers[0].init_parameter();
     layers[0].init_storage(total_layer_num);
 

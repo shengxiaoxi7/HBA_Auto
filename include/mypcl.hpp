@@ -169,32 +169,29 @@ namespace mypcl
 
   void write_global_map_from_pose(std::vector<pose>& pose_vec, std::string path, std::vector<pcl::PointCloud<PointType>::Ptr>& pcds)
   {
-      pcl::PointCloud<PointType>::Ptr global_map(new pcl::PointCloud<PointType>());
+    pcl::PointCloud<PointType>::Ptr global_map(new pcl::PointCloud<PointType>());
 
-      for (size_t i = 0; i < pose_vec.size(); ++i)
-      {
-          Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
+    for (size_t i = 0; i < pose_vec.size(); ++i)
+    {
+      Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
+      auto& p = pose_vec[i];
+      auto& cloud = *pcds[i];
 
-          transform.block<3, 3>(0, 0) = pose_vec[i].q.toRotationMatrix().cast<float>();  // 旋转部分
-          transform.block<3, 1>(0, 3) = pose_vec[i].t.cast<float>();  // 平移部分
+      pcl::PointCloud<PointType>::Ptr transformed_cloud(new pcl::PointCloud<PointType>());
+      transform_pointcloud(cloud, *transformed_cloud, p.t, p.q);
 
-          pcl::PointCloud<PointType>::Ptr cloud = pcds[i];
+      *global_map += *transformed_cloud;
+    }
 
-          pcl::PointCloud<PointType>::Ptr transformed_cloud(new pcl::PointCloud<PointType>());
-          pcl::transformPointCloud(*cloud, *transformed_cloud, transform);
+    if (global_map->points.empty())
+    {
+      std::cerr << "No points in the global map. Please check the input point clouds." << std::endl;
+      return;
+    }
+    downsample_voxel(*global_map, 0.1);
 
-          *global_map += *transformed_cloud;
-      }
-
-      if (global_map->points.empty())
-      {
-          std::cerr << "No points in the global map. Please check the input point clouds." << std::endl;
-          return;
-      }
-      downsample_voxel(*global_map, 0.1);
-
-      pcl::io::savePCDFileASCII(path + "final_map.pcd", *global_map);
-      std::cout << "Global map saved to " << path + "final_map.pcd" << std::endl;
+    pcl::io::savePCDFileASCII(path + "final_map.pcd", *global_map);
+    std::cout << "Global map saved to " << path + "final_map.pcd" << std::endl;
   }
 
   void writeEVOPose(std::vector<double>& lidar_times, std::vector<pose>& pose_vec, std::string path)
